@@ -19,7 +19,7 @@ export class ProductsService extends ApiService {
       return EMPTY;
     }
 
-    const url = this.getUrl('bff', 'products');
+    const url = this.getUrl('bff', 'product');
     return this.http.post<Product>(url, product);
   }
 
@@ -63,7 +63,7 @@ export class ProductsService extends ApiService {
       return this.http.get<Product[]>('/assets/products.json');
     }
 
-    const url = this.getUrl('bff', 'products');
+    const url = this.getUrl('product', '');
     return this.http.get<Product[]>(url);
   }
 
