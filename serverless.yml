@@ -1,0 +1,115 @@
+# Welcome to serverless. Read the docs
+# https://serverless.com/framework/docs/
+
+# Serverless.yml is the configuration the CLI
+# uses to deploy your code to your provider of choice
+
+# The `service` block is the name of the service
+service: web-cars-marketplace
+
+frameworkVersion: '3'
+
+# The `provider` block defines where your service will be deployed
+provider:
+  name: aws
+  runtime: nodejs12.x
+  region: eu-west-1
+
+plugins:
+  - serverless-s3-sync
+  - serverless-single-page-app-plugin
+
+resources:
+      Resources:
+        StaticSite:
+          Type: AWS::S3::Bucket
+          Properties:
+            AccessControl: PublicRead
+            BucketName: web-cars-marketplace-angular
+            WebsiteConfiguration:
+              IndexDocument: index.html
+
+        StaticSiteS3BucketPolicy:
+          Type: AWS::S3::BucketPolicy
+          Properties:
+            Bucket:
+              Ref: StaticSite
+            PolicyDocument:
+              Statement:
+                - Sid: PublicReadGetObject
+                  Effect: Allow
+                  Principal: "*"
+                  Action:
+                    - s3:GetObject
+                  Resource:
+                    Fn::Join: [
+                      "", [
+                        "arn:aws:s3:::",
+                        {
+                          "Ref": "StaticSite"
+                        },
+                        "/*"
+                      ]
+                    ]
+
+        WebAppCloudFrontDistribution:
+          Type: AWS::CloudFront::Distribution
+          Properties:
+            DistributionConfig:
+              Origins:
+                - DomainName:
+                    Fn::Join: [
+                      "", [
+                        { "Ref": "StaticSite" },
+                        ".s3.amazonaws.com"
+                      ]
+                    ]
+                  ## An identifier for the origin which must be unique within the distribution
+                  Id: WebApp
+                  CustomOriginConfig:
+                    HTTPPort: 80
+                    HTTPSPort: 443
+                    OriginProtocolPolicy: https-only
+                  ## In case you want to restrict the bucket access use S3OriginConfig and remove CustomOriginConfig
+                  # S3OriginConfig:
+                  #   OriginAccessIdentity: origin-access-identity/cloudfront/E127EXAMPLE51Z
+              Enabled: 'true'
+              ## Uncomment the following section in case you are using a custom domain
+              # Aliases:
+              # - mysite.example.com
+              DefaultRootObject: index.html
+              ## Since the Single Page App is taking care of the routing we need to make sure ever path is served with index.html
+              ## The only exception are files that actually exist e.h. app.js, reset.css
+              CustomErrorResponses:
+                - ErrorCode: 404
+                  ResponseCode: 200
+                  ResponsePagePath: /index.html
+              DefaultCacheBehavior:
+                AllowedMethods:
+                  - DELETE
+                  - GET
+                  - HEAD
+                  - OPTIONS
+                  - PATCH
+                  - POST
+                  - PUT
+                ## The origin id defined above
+                TargetOriginId: WebApp
+                ## Defining if and how the QueryString and Cookies are forwarded to the origin which in this case is S3
+                ForwardedValues:
+                  QueryString: 'false'
+                  Cookies:
+                    Forward: none
+                ## The protocol that users can use to access the files in the origin. To allow HTTP use `allow-all`
+                ViewerProtocolPolicy: redirect-to-https
+              ## The certificate to use when viewers use HTTPS to request objects.
+              ViewerCertificate:
+                CloudFrontDefaultCertificate: 'true'
+custom:
+  s3Sync:
+    - bucketName: web-cars-marketplace-angular
+      localDir: dist/app
+      deleteRemoved: false
+      acl: public-read
+      defaultContentType: application/json
+
