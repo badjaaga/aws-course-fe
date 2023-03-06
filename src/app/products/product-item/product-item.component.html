@@ -7,7 +7,7 @@
 
   <header>
     <mat-card-title>
-      {{ product.name }}
+      {{ product.title }}
     </mat-card-title>
   </header>
 
@@ -22,7 +22,7 @@
       *ngIf="(countInCart$ | async) === 0"
       (click)="add()"
       color="accent"
-      matTooltip="Add {{ product.name }} to cart"
+      matTooltip="Add {{ product.title }} to cart"
       mat-icon-button
     >
       <mat-icon>shopping_cart</mat-icon>
@@ -33,7 +33,7 @@
       *ngIf="(countInCart$ | async)! > 0"
       (increment)="add()"
       (decrement)="remove()"
-      [productName]="product.name"
+      [productName]="product.title"
       [count]="(countInCart$ | async)!"
       [available]="product.count"
     ></app-cart-count-controls>

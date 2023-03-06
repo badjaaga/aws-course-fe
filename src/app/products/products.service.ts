@@ -19,7 +19,7 @@ export class ProductsService extends ApiService {
       return EMPTY;
     }
 
-    const url = this.getUrl('bff', 'product');
+    const url = this.getUrl('product', '');
     return this.http.post<Product>(url, product);
   }
 
